@@ -451,7 +451,8 @@ function switchSet(key, btn) {
   currentSet = key;
   document.querySelectorAll('.set-btn').forEach(function(b) { b.classList.remove('active'); });
   btn.classList.add('active');
-  renderStage();
+  loadLog();
+renderStage();
   setHint('點 SPIN 開始！');
 }
 
@@ -585,7 +586,24 @@ function runReelSpin(inner, targetSym, duration, cb) {
 }
 
 // ── LOG ──
-function addLogEntry(name, set, results) {
+var LOG_KEY = 'sj-spin-log';
+
+function saveLog(entries) {
+  localStorage.setItem(LOG_KEY, JSON.stringify(entries));
+}
+
+function loadLog() {
+  var entries = JSON.parse(localStorage.getItem(LOG_KEY) || '[]');
+  if (entries.length === 0) return;
+  var list = document.getElementById('logList');
+  var empty = document.getElementById('logEmpty');
+  if (empty) empty.remove();
+  entries.forEach(function(e) {
+    renderLogEntry(e.name, e.set, e.results, false);
+  });
+}
+
+function renderLogEntry(name, set, results, prepend) {
   var list = document.getElementById('logList');
   var empty = document.getElementById('logEmpty');
   if (empty) empty.remove();
@@ -608,7 +626,15 @@ function addLogEntry(name, set, results) {
   });
   entry.appendChild(imgs);
 
-  list.insertBefore(entry, list.firstChild);
+  if (prepend) list.insertBefore(entry, list.firstChild);
+  else list.appendChild(entry);
+}
+
+function addLogEntry(name, set, results) {
+  var entries = JSON.parse(localStorage.getItem(LOG_KEY) || '[]');
+  entries.push({ name: name || '（匿名）', set: set, results: results });
+  saveLog(entries);
+  renderLogEntry(name, set, results, true);
 }
 
 function resetLog() {
@@ -618,6 +644,7 @@ function resetLog() {
     alert('密碼錯誤！');
     return;
   }
+  localStorage.removeItem(LOG_KEY);
   var list = document.getElementById('logList');
   list.innerHTML = '<div class="log-empty" id="logEmpty">尚無紀錄</div>';
 }
@@ -676,6 +703,7 @@ function setHint(msg, ready) {
   h.className = 'hint' + (ready ? ' ready' : '');
 }
 
+loadLog();
 renderStage();
 </script>
 </body>
